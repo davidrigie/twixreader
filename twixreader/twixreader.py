@@ -6,7 +6,12 @@ from . import vdspec as vd
 from . import vbspec as vb
 import os
 from .header_parser import header_parser as hp
-from .dict_viewer import dict_viewer as dv
+
+try:
+    from .dict_viewer import dict_viewer as dv
+
+except ImportError:
+    pass
 
 
 def detect_vb_or_vd(datpath):
@@ -395,7 +400,10 @@ class _MeasurementHeader:
         self._parent = parent
 
     def view(self):
-        dv.view(self._buffers)
+        if dv:
+            dv.view(self._buffers)
+        else:
+            print(self._buffers)
 
     def dump(self, filepath=None, file_ext='json'):
 
