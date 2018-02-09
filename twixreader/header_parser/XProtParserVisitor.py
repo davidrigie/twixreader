@@ -58,6 +58,13 @@ class XProtParserVisitor(ParseTreeVisitor):
             asc_dict = parse_ascconv(asc.getText())
             ascconv.append(asc_dict)
 
+        if len(xprot) == 1:
+            xprot = xprot[0]
+
+        if len(ascconv) == 1:
+            ascconv = ascconv[0]
+
+
         val['xprot'] = xprot
         val['ascconv'] = ascconv
 

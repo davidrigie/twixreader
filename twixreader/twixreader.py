@@ -7,11 +7,8 @@ from . import vbspec as vb
 import os
 from .header_parser import header_parser as hp
 
-try:
-    from .dict_viewer import dict_viewer as dv
+from .json_html_viewer import json_html_viewer as jview
 
-except ImportError:
-    pass
 
 
 def detect_vb_or_vd(datpath):
@@ -400,8 +397,8 @@ class _MeasurementHeader:
         self._parent = parent
 
     def view(self):
-        if dv:
-            dv.view(self._buffers)
+        if jview:
+            jview.view(self._buffers)
         else:
             print(self._buffers)
 
@@ -414,8 +411,9 @@ class _MeasurementHeader:
             file_namer = lambda key: '{0}_{1}.{2}'.format(filepath, key, file_ext)
 
         savefun_and_buffer_select = dict(yaml = (hp.dict2yaml, self._buffers), 
-                                         txt  = (hp.dict2json, self._raw_buffers),
-                                         json = (hp.dict2json, self._buffers)
+                                         txt  = (hp.dict2txt, self._raw_buffers),
+                                         json = (hp.dict2json, self._buffers),
+                                         html = (jview.write,  self._buffers)
                                     )
         if file_ext not in savefun_and_buffer_select:
             file_ext = 'json'

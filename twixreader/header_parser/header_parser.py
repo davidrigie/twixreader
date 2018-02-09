@@ -8,6 +8,7 @@ import re
 import yaml, json
 import os
 import sys
+import itertools
 
 def parse_string(s):
     
@@ -46,6 +47,16 @@ def dict2json(d, filename):
     with open(filename, 'w+') as f:
         s = json.dumps(d, indent=4)
         string2file(s, filename)
+
+def dict2txt(d, filename):
+    keys = list(d.keys())
+    vals = [d[key] for key in keys]
+    keys_and_vals = itertools.chain(*zip(keys,vals))
+
+    s = ('### {} ###\n\n{}'*len(keys)).format(*keys_and_vals)
+
+    string2file(s, filename)
+
 
 def string2file(s, filename):
     mkdir_for_file(filename)
