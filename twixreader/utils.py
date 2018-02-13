@@ -78,7 +78,7 @@ def prettyvars(obj, skip_private = True):
             continue
         print(Fore.LIGHTBLUE_EX + key + ': ' + Fore.RESET + str(val))
 
-def print_table(data, headers=None, col_width=20):
+def print_table(data, headers=None, col_width=16):
     io = StringIO()
     num_cols = len(data[0])
     fmt = '{:>' + str(col_width) + '}'

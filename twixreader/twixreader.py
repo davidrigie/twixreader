@@ -126,6 +126,8 @@ class Measurement:
             print('Reading MDH {0}'.format(counter),end='\r')
             dma_length_arr.append(dma_length)
         
+        print('\n')
+        
         mempos = np.zeros(len(dma_length_arr), dtype=int)
         mempos[1::] += np.cumsum(dma_length_arr[0:-1]).astype(int)
 
