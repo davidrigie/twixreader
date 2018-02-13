@@ -328,6 +328,7 @@ class _MeasurementBuffer:
         self.num_channels = self.mdh[0]['used_channel']
         self.squeeze_dims = True
         self.sort_data    = True
+        self.reshape_data = True
                
     def __len__(self):
         return self._num_mdh
@@ -340,7 +341,7 @@ class _MeasurementBuffer:
         dim_sizes[-2] = self.mdh[0]['used_channel']
 
         for i,d in enumerate(self.mdh_dim_order):
-            dim_sizes[i] = (np.max(self.mdh[d]) - np.min(self.mdh[d])) + 1
+            dim_sizes[i] = len(np.unique(self.mdh[d]))
         
         if self.squeeze_dims == True:
             dim_sizes = dim_sizes[dim_sizes>1]
@@ -371,12 +372,26 @@ class _MeasurementBuffer:
         if self.sort_data:
             idx = self.get_sort_idx(mdh_subarr)
             mdh_subarr = mdh_subarr[idx]
-
-        bytearr = self.bytearr       
         
         num_requested   = len(mdh_subarr)
 
-        scan_data = split_bytearr(bytearr, 
+        scan_data = split_bytearr(self.bytearr, 
+                                  offset = mdh_subarr['mempos'], 
+                                  size = mdh_subarr['dma_length']).view(self.scan_dtype)
+
+        scan_data = scan_data['channel_block']['pixel_data'].reshape(final_shape)
+
+        return scan_data
+    
+    def _unsorted_helper(self, key):
+
+        mdh_subarr = self.mdh.__getitem__(key)
+        mdh_subarr = np.atleast_1d(mdh_subarr)
+
+        num_requested   = len(mdh_subarr)
+        final_shape = (num_requested, self.num_channels, self.num_pixels)
+
+        scan_data = split_bytearr(self.bytearr, 
                                   offset = mdh_subarr['mempos'], 
                                   size = mdh_subarr['dma_length']).view(self.scan_dtype)
 
@@ -386,6 +401,9 @@ class _MeasurementBuffer:
 
     def __getitem__(self,idx):
         
+        if self.reshape_data == False:
+            return self._unsorted_helper(idx)
+
         if has_len(idx) and (len(idx) > (self.ndim-2)):
             data = self._getitem_helper(idx[0:-2])
             data = np.array(data, ndmin = self.ndim)
