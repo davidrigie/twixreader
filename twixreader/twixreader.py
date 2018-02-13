@@ -332,6 +332,7 @@ class _MeasurementBuffer:
         self.squeeze_dims = True
         self.sort_data    = True
         self.reshape_data = True
+        self.mdh_use_dims = _MeasurementBuffer.mdh_dim_order[6::]
                
     def __len__(self):
         return self._num_mdh
@@ -343,7 +344,7 @@ class _MeasurementBuffer:
         dim_sizes[-1] = self.mdh[0]['samples_in_scan']
         dim_sizes[-2] = self.mdh[0]['used_channel']
 
-        for i,d in enumerate(self.mdh_dim_order):
+        for i,d in enumerate(self.mdh_use_dims):
             dim_sizes[i] = len(np.unique(self.mdh[d]))
         
         if self.squeeze_dims == True:
@@ -360,7 +361,7 @@ class _MeasurementBuffer:
         return len(self.shape)
 
     def get_sort_idx(self, mdh_arr):
-        keys = np.vstack(mdh_arr[k] for k in self.mdh_dim_order)
+        keys = np.vstack(mdh_arr[k] for k in self.mdh_use_dims)
         idx = np.lexsort(keys)
         return idx
 
