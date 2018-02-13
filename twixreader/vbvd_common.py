@@ -13,7 +13,7 @@ def SLICE_DATA():
         ]
     )
 
-    EVAL_INFO_BITFIELD = generate_bitfield(64)
+EVAL_INFO_BITFIELD = generate_bitfield(64)
 
 EVAL_INFO_FLAGS = \
 (

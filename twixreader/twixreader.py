@@ -4,6 +4,7 @@ from numpy.lib.recfunctions import *
 from .utils import *
 from . import vdspec as vd
 from . import vbspec as vb
+from . import vbvd_common as vbvd
 import os
 from .header_parser import header_parser as hp
 
@@ -132,7 +133,9 @@ class Measurement:
 
     def select_by(self, mdh_flags = {}, 
                         contains_eval_info_flags = (),
-                        excludes_eval_info_flags = ()
+                        excludes_eval_info_flags = ('sync_data',
+                                                    'acq_end',
+                                                    'ct_normalize')
                  ):
         """
         select a measurement buffer that satisfies certain flag criteria
@@ -168,12 +171,12 @@ class Measurement:
 
         # Keep MDH's that have these eval_info_mask properties
         for flag_name in contains_eval_info_flags:
-            idx = check_flag(mdh['eval_info_mask'], flag_name)
+            idx = vbvd.check_flag(mdh['eval_info_mask'], flag_name)
             mdh = mdh[idx]
 
         # Keep MDH's that do NOT have these eval_info_mask properties
         for flag_name in excludes_eval_info_flags:
-            idx = ~check_flag(mdh['eval_info_mask'], flag_name)
+            idx = ~vbvd.check_flag(mdh['eval_info_mask'], flag_name)
             mdh = mdh[idx]
 
         buf = self._create_measurement_buffer(mdh)
@@ -244,7 +247,7 @@ class Measurement:
             g = mdh_arr[idx]
             # Skip scans with 0 samples
             mdh_groups.append(g)
-            flags = vd.get_flags(uval)
+            flags = vbvd.get_flags(uval)
             print('Group {0}: '.format(counter) + ', '.join(map(str, flags)))
             counter += 1      
 
@@ -271,14 +274,14 @@ class Measurement:
     def filter_flags(self, mdh_arr, bad_flags=['ct_normalize']):
 
         for flg in bad_flags:
-            ind = np.logical_not(vd.check_flag(mdh_arr['eval_info_mask'], flg))
+            ind = np.logical_not(vbvd.check_flag(mdh_arr['eval_info_mask'], flg))
             mdh_arr = mdh_arr[ind]
 
         return mdh_arr
 
     def remove_non_image_scans(self, mdh_arr):
 
-        hasflag = lambda flag_name: vd.check_flag(mdh_arr['eval_info_mask'], flag_name)
+        hasflag = lambda flag_name: vbvd.check_flag(mdh_arr['eval_info_mask'], flag_name)
         
         mask = (        hasflag('acq_end') 
                     |   hasflag('rt_feedback') 
@@ -383,7 +386,7 @@ class _MeasurementBuffer:
 
         return scan_data
     
-    def _unsorted_helper(self, key):
+    def _unsorted(self, key):
 
         mdh_subarr = self.mdh.__getitem__(key)
         mdh_subarr = np.atleast_1d(mdh_subarr)
@@ -402,7 +405,7 @@ class _MeasurementBuffer:
     def __getitem__(self,idx):
         
         if self.reshape_data == False:
-            return self._unsorted_helper(idx)
+            return self._unsorted(idx)
 
         if has_len(idx) and (len(idx) > (self.ndim-2)):
             data = self._getitem_helper(idx[0:-2])
