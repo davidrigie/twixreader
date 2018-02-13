@@ -95,7 +95,7 @@ class HTML_Writer:
 
         if type(x) is dict:
             self.render_object(x)
-        elif type(x) is list:
+        elif islistlike(x):
             self.render_list(x)
         elif type(x) is bool:
             self.render_bool(x)
@@ -145,9 +145,9 @@ class HTML_Writer:
 
         
 def is_collapsible(val):
-    if (issubclass(type(val), dict)):
+    if (isdict(val)):
         return True
-    if (type(val) is list) and (len(val) > 1):
+    if (islistlike(val)) and (len(val) > 1):
         return True
 
     return False
@@ -157,9 +157,9 @@ def rand_string():
 
 
 def convert(x):
-    if type(x) is list:
+    if islistlike(x):
         return x
-    if issubclass(type(x), dict):
+    if isdict(x):
         return dict(x)
 
     if type(x) is tuple:
@@ -227,17 +227,17 @@ def clean_dict(d):
     They keys get merged like key1.key2 for clarity
 
     """
-    if type(d) is list:
+    if islistlike(d):
         dnew = []
         for i in range(len(d)):
             dnew.append(clean_dict(d[i]))
 
         return dnew
 
-    if issubclass(type(d),dict):
+    if isdict(d):
         dnew = {}
         
-        if (len(d) == 1) and issubclass(type(next(iter(d.values()))),dict):
+        if (len(d) == 1) and isdict(next(iter(d.values()))):
             parent_key = next(iter(d.keys()))
             sub_dict   = next(iter(d.values()))
             d.popitem()
@@ -255,7 +255,36 @@ def clean_dict(d):
 
     return d
     
-        
+def isdict(d):
+
+    if issubclass(type(d),dict):
+        return True
+    
+    return False
+
+def islistlike(x):
+    if issubclass(type(x), list) or issubclass(type(x),tuple):
+        return True
+
+    else:
+        return False
+
+def ensure_all_keys_are_strings(d):
+
+    if isdict(d):
+        d_new = {}
+        for key,val in d.items():
+            d_new[str(key)] = ensure_all_keys_are_strings(d[key])
+        return d_new
+    elif islistlike(d):
+        d_new = []
+        for val in d:
+            d_new.append(ensure_all_keys_are_strings(val))
+        return d_new
+    else:
+        return d
+
+
 @convert_json
 def view(d, cssfile = _CSS_DEFAULTPATH, clean = True):
     """
@@ -273,6 +302,7 @@ def view(d, cssfile = _CSS_DEFAULTPATH, clean = True):
         view('some_file.json') 
 
     """
+    d = ensure_all_keys_are_strings(d)
     if clean:
         d = clean_dict(d)
 
@@ -296,6 +326,7 @@ def write(d, filename, cssfile = _CSS_DEFAULTPATH, clean = True):
         write('some_file.json') 
 
     """
+    d = ensure_all_keys_are_strings(d)
     if clean:
         d = clean_dict(d)
 
