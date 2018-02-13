@@ -67,8 +67,15 @@ class TwixReaderVD(TwixReader):
         names = [s.decode('UTF-8') for s in self._mr_parc_raid_file_entry.protocol_name]
         return names
 
-    
-    def read_measurement(self, meas_num=0, header_only = False):
+    def _read_all_measurements(self, header_only=False):
+        val = [self.read_measurement(i, header_only=header_only) for i in range(self.num_meas)]
+        return val
+
+    def read_measurement(self, meas_num=None, header_only = False):
+        
+        if meas_num is None:
+            return self._read_all_measurements(header_only=header_only)
+
         file_entry = self._mr_parc_raid_file_entry[meas_num]
         meas_offset = file_entry['offset']
         meas_length = file_entry['length']
