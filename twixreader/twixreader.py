@@ -106,6 +106,7 @@ class Measurement:
         self.split_by()
         
     def _read_all_mdh(self):
+
         bytearr = self._bytearr
 
         pos = 0
@@ -128,6 +129,57 @@ class Measurement:
         mdh_arr = append_fields(mdh_arr, 'mempos', mempos, usemask=False)
 
         return mdh_arr
+
+    def select_by(self, mdh_flags = {}, 
+                        contains_eval_info_flags = (),
+                        excludes_eval_info_flags = ()
+                 ):
+        """
+        select a measurement buffer that satisfies certain flag criteria
+        ----------
+        mdh_flags : dict
+            Contains key/value pairs describing the values that mdh flags should 
+            have in order to be selected
+        contains_eval_info_flags : tuple,list
+            list of flags that should be included
+        excludes_eval_info_flags : tuple,list
+            list of flags that should not be present
+
+        Returns
+        -------
+        out : MeasurementBuffer object
+            Returns a measurement buffer containing only the measurements that
+            match the selection criteria
+
+        Examples
+        --------
+        meas_object.select_by({'samples_in_scan': 512,
+                               'used_channel': 12},      # MDH flags must have these values
+                               ( ),                      # No required eval_info_mask fields
+                               ('acq_end', 'sync_data')) # eval_info_mask should NOT contain these flags
+        """
+
+        mdh = self._all_mdh
+
+        # Keep MDH's that match these fields
+        for key,val in mdh_flags.items():
+            idx = (mdh[key] == val)
+            mdh = mdh[idx]
+
+        # Keep MDH's that have these eval_info_mask properties
+        for flag_name in contains_eval_info_flags:
+            idx = check_flag(mdh['eval_info_mask'], flag_name)
+            mdh = mdh[idx]
+
+        # Keep MDH's that do NOT have these eval_info_mask properties
+        for flag_name in excludes_eval_info_flags:
+            idx = ~check_flag(mdh['eval_info_mask'], flag_name)
+            mdh = mdh[idx]
+
+        buf = self._create_measurement_buffer(mdh)
+        
+        return buf
+
 
     @staticmethod
     def _read_dma_length(bytearr, pos=0):
