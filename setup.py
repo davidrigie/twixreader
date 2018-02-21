@@ -20,6 +20,7 @@ setup(
     author='David Rigie',
     author_email='daverigie@gmail.com',  
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
+    include_package_data = True,
     python_requires='>=3.0',
     install_requires=[
         'numpy',

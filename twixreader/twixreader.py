@@ -270,15 +270,7 @@ class Measurement:
             mdh_group = np.concatenate([self._mdh_groups[i] for i in group_num])
 
         return self._create_measurement_buffer(mdh_group)
-            
-    @property
-    def mdh(self):
-        return self.meas_buffer.mdh
-
-    @property
-    def mdh_nd(self):
-        return self.mdh.reshape(self.shape)
-    
+               
 
     def filter_flags(self, mdh_arr, bad_flags=['ct_normalize']):
 
