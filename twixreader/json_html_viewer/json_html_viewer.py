@@ -4,7 +4,6 @@ import random
 import webbrowser
 import tempfile
 import os
-import ipdb
 
 _HERE            = os.path.dirname(os.path.abspath(__file__))
 _TEST_FILEPATH   = os.path.join(_HERE, 'examples', 'test.json')
