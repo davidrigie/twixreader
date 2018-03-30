@@ -50,6 +50,10 @@ class TwixReaderVB(TwixReader):
 
     def read_measurement(self, header_only=False):
         meas = MeasurementVB(self.twix_map, header_only=header_only)
+        return meas
+
+    def vers(self):
+        return 'VB'
         
         return meas
 
@@ -61,6 +65,9 @@ class TwixReaderVD(TwixReader):
         multi_raid_file_header = self.twix_map[0:dtype.itemsize].view(dtype).item()        
         self.num_meas = multi_raid_file_header[0][1]
         self._mr_parc_raid_file_entry = np.rec.array(multi_raid_file_header[1][0:self.num_meas])
+
+    def vers(self):
+        return 'VD'
 
     @property
     def meas_names(self):
@@ -304,7 +311,6 @@ class MeasurementVD(Measurement):
 
     def _create_measurement_buffer(self, mdh_group):
         return _MeasurementBufferVD(mdh_group, self._bytearr)
-
     
 
 class MeasurementVB(Measurement):
