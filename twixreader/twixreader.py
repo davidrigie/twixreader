@@ -48,8 +48,12 @@ class TwixReader:
         
 class TwixReaderVB(TwixReader):
 
-    def read_measurement(self, header_only=False):
-        meas = MeasurementVB(self.twix_map, header_only=header_only)
+    def __init__(self, datpath):
+        super().__init__(datpath)
+        self.num_meas = 1
+
+    def read_measurement(self, header_only=False, parse_buffers = True):
+        meas = MeasurementVB(self.twix_map, header_only=header_only, parse_buffers = parse_buffers)
         return meas
 
     def vers(self):
@@ -78,7 +82,7 @@ class TwixReaderVD(TwixReader):
         val = [self.read_measurement(i, header_only=header_only) for i in range(self.num_meas)]
         return val
 
-    def read_measurement(self, meas_num=None, header_only = False):
+    def read_measurement(self, meas_num=None, header_only = False, parse_buffers = True):
         
         if meas_num is None:
             return self._read_all_measurements(header_only=header_only)
@@ -89,7 +93,7 @@ class TwixReaderVD(TwixReader):
         meas_id     = file_entry['meas_id']
         meas_map = self.twix_map[meas_offset:(meas_offset+meas_length)]
 
-        meas = MeasurementVD(meas_map, header_only = header_only)
+        meas = MeasurementVD(meas_map, header_only = header_only, parse_buffers = parse_buffers)
         meas.mid = meas_id
         
         return meas
@@ -99,14 +103,14 @@ class Measurement:
 
     dtype_scan_header = None
     
-    def __init__(self, meas_map, header_only = False):
+    def __init__(self, meas_map, header_only = False, parse_buffers = True):
         self.meas_map = meas_map
-        
         self.header_size, self.num_buffers = read_from_bytearr(self.meas_map, 
                                                                dtype='u4', count = 2)
         buffer_offset = 8
         meas_hdr_map = self.meas_map[buffer_offset:self.header_size]
-        self.hdr = _MeasurementHeader(meas_hdr_map, self.num_buffers)
+        self.hdr = _MeasurementHeader(meas_hdr_map, self.num_buffers,
+                                      parse_buffers = parse_buffers)
         self.hdr.set_parent(self)
         
         if header_only:
@@ -116,6 +120,9 @@ class Measurement:
 
         self._all_mdh = self._read_all_mdh()
         self._all_mdh = self.remove_non_image_scans(self._all_mdh)
+        
+        #print('Skipping to first imaging measurement...')
+        #self._all_mdh = self.skip_to_first_meas(self._all_mdh)
 
         self.mid = int( np.median(self._all_mdh['meas_uid']) )
         self.split_by()
@@ -287,6 +294,15 @@ class Measurement:
 
         return mdh_arr
 
+    def skip_to_first_meas(self, mdh_arr):
+
+        hasflag = lambda flag_name: vbvd.check_flag(mdh_arr['eval_info_mask'], flag_name)
+        ind = np.min(np.where(hasflag('first_scan_in_slice'))[0])
+        mdh_arr = mdh_arr[ind::]
+
+        return mdh_arr
+
+
     def remove_non_image_scans(self, mdh_arr):
 
         hasflag = lambda flag_name: vbvd.check_flag(mdh_arr['eval_info_mask'], flag_name)
@@ -442,7 +458,7 @@ class _MeasurementBufferVB(_MeasurementBuffer):
 
 class _MeasurementHeader:
 
-    def __init__(self, meas_hdr_map, num_buffers):
+    def __init__(self, meas_hdr_map, num_buffers, parse_buffers=True):
         self._buffers = dict()
         self._raw_buffers = dict()
         self.meas_hdr_map = meas_hdr_map
@@ -456,7 +472,8 @@ class _MeasurementHeader:
             buffer_text = fileobj.read(int(buffer_length))
             self._raw_buffers[buffer_name] = buffer_text.decode('UTF-8')
 
-        self._parse_raw_buffers()
+        if parse_buffers:
+            self._parse_raw_buffers()
 
 
     def _parse_raw_buffers(self):

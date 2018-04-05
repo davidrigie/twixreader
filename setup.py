@@ -21,6 +21,9 @@ setup(
     author_email='daverigie@gmail.com',  
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required
     include_package_data = True,
+    entry_points = {
+                  'console_scripts': ['twix2html=twixreader.command_line:main'],
+            },
     python_requires='>=3.0',
     install_requires=[
         'numpy',
